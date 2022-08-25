@@ -1,0 +1,18 @@
+# Django #
+*.log
+*.pot
+*.pyc
+__pycache__
+db.sqlite3
+.env
+media
+rssfeeder/migrations
+staticfiles
+.logs
+
+# Backup files #
+*.bak
+
+#pycharm
+.idea
+venv

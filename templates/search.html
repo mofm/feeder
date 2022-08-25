@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    {% load static %}
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Feeder</title>
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" href="{% static 'main.css' %}" />
+  </head>
+  <body class="d-flex flex-column">
+    
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <a class="navbar-brand" href="#">Feeder</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/news">News <span class="sr-only">(current)</span></a>
+                    </li>
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/tech">Tech</a>
+                    </li>
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/videos">Videos</a>
+                    </li>
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/science">Science</a>
+                    </li>
+                </ul>
+                <form action="{% url 'search' %}" class="form-inline my-2 my-lg-0" method="get">
+                    <input class="form-control mr-sm-2" type="search" name="q" placeholder="Search" aria-label="Search">
+                    <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+                </form>
+            </div>
+        </nav>
+{#      <nav class="container">#}
+{#        <div class="row">#}
+{#          <div class="col text-center">#}
+{#            <img src="{% static 'imgs/pycasts.png' %}" alt="pyCasts! Logo" id="site-logo" />#}
+{#          </div>#}
+{#        </div>#}
+{#      </nav>#}
+    </header>
+
+    <main class="container flex-grow-1">
+      <div class="row">
+        <div class="col">
+          {% for episode in page_obj %}
+          <section class="card mb-3">
+            <div class="row no-gutters">
+              <div class="col-md-2 my-auto">
+                <img
+                  src="{{ episode.news_img }}"
+                  class="img-fluid mx-auto d-block"
+                  alt="{{ episode.podcast_name }}"
+                />
+              </div>
+              <div class="col-md-10">
+                <div class="card-body ml-3">
+                  <h3 class="card-title">{{ episode.title }}</h3>
+                  <p class="card-text">{{ episode.description }}</p>
+                  <p class="card-text"><small class="text-muted">{{ episode.pub_date }}</small></p>
+                  <a href="{{ episode.link }}" target="_blank">
+                    <p class="btn btn-primary">Read more...</p>
+                  </a>
+                  <div class="card-footer text-muted">
+                      {{ episode.podcast_name }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+          {% empty %}
+              <div class="vh-100 d-flex align-items-center justify-content-center">
+                  <div><h3>No results found. Try again.</h3></div>
+              </div>
+          {% endfor %}
+        </div>
+      </div>
+    </main>
+
+    <footer class="container-fluid bg-dark">
+      <div class="row">
+        <div class="col text-center">
+          <img src="{% static 'imgs/python-powered.svg' %}" alt="Python Powered" height="50px" />
+        </div>
+      </div>
+    </footer>
+
+    <!-- jquery -->
+    <script src="//code.jquery.com/jquery-1.12.4.min.js"></script>
+    <script src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+    <!-- [/] jquery -->
+    <script
+      src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"
+      integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV"
+      crossorigin="anonymous"
+    ></script>
+  </body>
+</html>
