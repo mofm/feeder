@@ -152,7 +152,7 @@ sudo systemctl enable gunicorn.service
 - Add new RSS URL to feed.ini file
 
 ```bash
-sudo vi  /path/to/feeder_venv/feeder/feed.ini
+vi  /path/to/feeder_venv/feeder/feed.ini
 ```
 
 ```bash
