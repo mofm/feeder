@@ -3,9 +3,10 @@ from .views import index, SearchResults
 
 
 urlpatterns = [
+    path("", index, name="defaultpage"),
     path("news", index, name="newspage"),
     path("tech", index, name="techpage"),
     path("videos", index, name="videospage"),
     path("science", index, name="sciencepage"),
-    path('search/', SearchResults.as_view(), name="search"),
+    path("search/", SearchResults.as_view(), name="search"),
 ]

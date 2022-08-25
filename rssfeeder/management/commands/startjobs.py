@@ -18,7 +18,7 @@ from django_apscheduler.jobstores import DjangoJobStore
 from django_apscheduler.models import DjangoJobExecution
 
 # Models
-from rssfeeder.models import Episode, Category
+from rssfeeder.models import Feed, Category
 
 
 logger = logging.getLogger(__name__)
@@ -26,27 +26,24 @@ config = configparser.ConfigParser()
 config.read(BASE_DIR.joinpath('feed.ini'))
 
 
-def save_new_episodes(feed, title, image, category):
-    """Saves new episodes to the database.
+def save_new_feeds(feed, title, image, category):
+    """Saves new feed to the database.
 
-    Checks the episode GUID agaist the episodes currently stored in the
-    database. If not found, then a new `Episode` is added to the database.
+    Checks the feed GUID against the feeds currently stored in the
+    database. If not found, then a new `feed` is added to the database.
 
     Args:
         feed: requires a feedparser object
         category: requires a category
-        title: title of the episode
-        image: feed image
+        title: title of the feed
+        image: channel image
     """
-    podcast_title = title
-    podcast_image = image
-
     html_types = ["text/html", "application/xhtml+xml"]
     img_tags = ['thumbnail', 'media_thumbnail', 'media_content']
     feed_img = "static/imgs/news.png"
 
     for item in feed.entries:
-        if not Episode.objects.filter(guid=item.guid).exists():
+        if not Feed.objects.filter(guid=item.guid).exists():
             try:
                 for k, v in item.items():
                     if k in img_tags and v is not None:
@@ -61,14 +58,14 @@ def save_new_episodes(feed, title, image, category):
                                 feed_img = imgs[0]
                             item.description = strip_tags(item.description)
 
-                episode = Episode(
+                episode = Feed(
                     title=item.title,
                     description=item.description,
                     pub_date=parser.parse(item.published),
                     link=item.link,
-                    image=podcast_image,
-                    news_img=feed_img,
-                    podcast_name=podcast_title,
+                    channel_img=image,
+                    feed_img=feed_img,
+                    channel_name=title,
                     guid=item.guid,
                     category=category,
                 )
@@ -80,11 +77,19 @@ def save_new_episodes(feed, title, image, category):
 def fetch_feeds():
     """ Fetches new episodes from config ini file"""
     for e in config.sections():
-        _feed = feedparser.parse(config[e]['feed'])
-        feed_cat = Category.objects.get(name=config[e]['category'])
-        feed_title = config[e]['title']
-        feed_logo = config[e]['logo']
-        save_new_episodes(_feed, feed_title, feed_logo, feed_cat)
+        # Get section values. If no value is found, skip section.
+        # get category from feed.ini file. If not found, then use default category
+        try:
+            _feed = feedparser.parse(config[e]['feed'])
+            feed_title = config[e]['title']
+            feed_logo = config[e]['logo']
+            feed_cat = Category.objects.get(name=config[e]['category'])
+        except KeyError:
+            continue
+        except Category.DoesNotExist:
+            feed_cat = Category.objects.get_or_create(name="Default")[0]
+
+        save_new_feeds(_feed, feed_title, feed_logo, feed_cat)
 
 
 def delete_old_job_executions(max_age=604_800):

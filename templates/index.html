@@ -17,7 +17,7 @@
     
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-            <a class="navbar-brand" href="#">Feeder</a>
+            <a class="navbar-brand" href="/">Feeder</a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -55,26 +55,26 @@
     <main class="container flex-grow-1">
       <div class="row">
         <div class="col">
-          {% for episode in page_obj %}
+          {% for feed in page_obj %}
           <section class="card mb-3">
             <div class="row no-gutters">
               <div class="col-md-2 my-auto">
                 <img
-                  src="{{ episode.news_img }}"
+                  src="{{ feed.feed_img }}"
                   class="img-fluid mx-auto d-block"
-                  alt="{{ episode.podcast_name }}"
+                  alt="{{ feed.channel_name }}"
                 />
               </div>
               <div class="col-md-10">
                 <div class="card-body ml-3">
-                  <h3 class="card-title">{{ episode.title }}</h3>
-                  <p class="card-text">{{ episode.description }}</p>
-                  <p class="card-text"><small class="text-muted">{{ episode.pub_date }}</small></p>
-                  <a href="{{ episode.link }}" target="_blank">
+                  <h3 class="card-title">{{ feed.title }}</h3>
+                  <p class="card-text">{{ feed.description }}</p>
+                  <p class="card-text"><small class="text-muted">{{ feed.pub_date }}</small></p>
+                  <a href="{{ feed.link }}" target="_blank">
                     <p class="btn btn-primary">Read more...</p>
                   </a>
                   <div class="card-footer text-muted">
-                      {{ episode.podcast_name }}
+                      {{ feed.channel_name }}
                   </div>
                 </div>
               </div>

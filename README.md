@@ -4,7 +4,7 @@
 
 # Introduction
 
-The goal of this project is to create a simple, yet powerful, reader for RSS feeds.
+The goal of this project is to create a simple, yet powerful, reader for RSS feeds. It reads RSS URLs in the feed.ini file and fetch the content of the feeds.
 
 The project is written with django 4.1 and Python 3.
 
@@ -173,4 +173,8 @@ sudo systemctl enable schedule_jobs.service
 Finally, you can test out the application by browsing to http://localhost:8000/
 
 ## Notes
-- Default four categories are Tech, Science, News and Videos hardcoded in the application 'url.py' file. You can add new categories by adding new lines in the file and adding new category in the admin interface. Also, you can add index.html file in the templates directory to customize the application.
+
+- This is personal project. So It may have missing features.
+- Homepage shows the feeds in the default category. If category key doesn't exist or empty value in feed.ini section, it shows the feeds in the default category.
+- Four categories are Tech, Science, News and Videos hardcoded in the application 'url.py' and 'views.py' file. But didn't create a object in categories for them. If you want to use them, you can create these categories in the admin interface.
+- You can add new categories by adding cat_data in 'views.py' and adding new category in the admin interface. Also, you can add index.html file in the templates directory to customize the application.

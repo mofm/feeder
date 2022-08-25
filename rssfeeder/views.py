@@ -4,14 +4,15 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
-from .models import Episode
+from .models import Feed
 
 
 cat_data = {
-    "/news": Episode.objects.filter(category__name='News').order_by("-pub_date"),
-    "/tech": Episode.objects.filter(category__name='Tech').order_by("-pub_date"),
-    "/videos": Episode.objects.filter(category__name='Videos').order_by("-pub_date"),
-    "/science": Episode.objects.filter(category__name='Science').order_by("-pub_date")
+    "/news": Feed.objects.filter(category__name='News').order_by("-pub_date"),
+    "/tech": Feed.objects.filter(category__name='Tech').order_by("-pub_date"),
+    "/videos": Feed.objects.filter(category__name='Videos').order_by("-pub_date"),
+    "/science": Feed.objects.filter(category__name='Science').order_by("-pub_date"),
+    "/": Feed.objects.filter(category__name='Default').order_by("-pub_date"),
 }
 
 
@@ -37,9 +38,9 @@ def index(request):
 class SearchResults(LoginRequiredMixin, ListView):
     login_url = '/admin/login/?next=/admin/'
     template_name = 'search.html'
-    model = Episode
+    model = Feed
     context_object_name = "page_obj"
 
     def get_queryset(self):
         query = self.request.GET.get("q")
-        return Episode.objects.filter(Q(title__icontains=query) | Q(description__icontains=query))
+        return Feed.objects.filter(Q(title__icontains=query) | Q(description__icontains=query))
