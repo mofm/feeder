@@ -8,7 +8,6 @@ class Category(models.Model):
         return self.name
 
 
-# Create your models here.
 class Feed(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField()

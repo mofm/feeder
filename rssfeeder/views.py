@@ -19,7 +19,6 @@ cat_data = {
 }
 
 
-# @login_required(login_url='/login')
 @permission_required('rssfeeder.view_feed', login_url='/login')
 def index(request):
     posts = cat_data.get(request.path)
