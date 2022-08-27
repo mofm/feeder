@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="{% static 'main.css' %}" />
   </head>
   <body class="d-flex flex-column">
-    
+
     <header>
         {% block navbar %}
             {% include  '_items/navbar.html' %}
@@ -49,21 +49,33 @@
               </div>
             </div>
           </section>
+          {% empty %}
+              <div class="vh-100 d-flex align-items-center justify-content-center">
+                  <div><h3>No items found..</h3></div>
+              </div>
           {% endfor %}
-	  <nav aria-label="Page navigation example">
-	  	<ul class="pagination justify-content-center">
-			{% if page_obj.has_previous %}
-				<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
-				<li class="page-item"><a class="page-link" href="?page=1">First</a></li>
-			{% endif %}
-			<li class="page-item"><a class="page-link" href="?page=1">1</a></li>
-			<li class="page-item"><a class="page-link" href="?page=2">2</a></li>
-			<li class="page-item"><a class="page-link" href="?page=3">3</a></li>
-			{% if page_obj.has_next %}
-				<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>
-				<li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a></li>
-			{% endif %}
-		</ul>
+	  <nav aria-label="Page navigation">
+        {% if page_obj.has_other_pages %}
+            <ul class="pagination justify-content-center pagination-sm flex-sm-wrap">
+                {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+                    <li class="page-item"><a class="page-link" href="?page=1">First</a></li>
+                {% endif %}
+                {% for i in page_obj.paginator.page_range %}
+                    {% if page_obj.number == i %}
+                        <li class="page-item active" aria-current="page">
+                            <a class="page-link">{{ i }} <span class="sr-only">(current)</span></a>
+                        </li>
+                    {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                        <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+                    {% endif %}
+                {% endfor %}
+                {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a></li>
+                {% endif %}
+            </ul>
+        {% endif %}
       </nav>
         </div>
       </div>
