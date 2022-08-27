@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    {% load static %}
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Feeder - Login Page</title>
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" href="{% static 'user.css' %}" />
+  </head>
+  <body class="d-flex flex-column">
+    {% block content %}
+        <div class="d-flex align-items-center flex-column justify-content-center h-100 bg-dark text-white" id="header">
+            <h1 class="display-4">Feeder.</h1>
+            <form action="{% url 'login' %}" method="POST">
+                {% csrf_token %}
+                <input type="hidden" id="id_next" name="next" value="{{ request.GET.next }}">
+                <div class="form-group">
+                    <label for="id_username" class="sr-only">Username</label>
+                    <input type="text" placeholder="Username" name="username" id="id_username" class="form-control" required
+                       autofocus>
+                </div>
+                <div class="form-group">
+                    <label for="id_password" class="sr-only">Password</label>
+                    <input type="password" placeholder="Password" name="password" id="id_password" class="form-control">
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-lg btn-primary btn-block" type="submit">Login</button>
+                </div>
+            </form>
+        </div>
+    {% endblock %}
+    <!-- jquery -->
+    <script src="//code.jquery.com/jquery-1.12.4.min.js"></script>
+    <script src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+    <!-- [/] jquery -->
+    <script
+      src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"
+      integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV"
+      crossorigin="anonymous"
+    ></script>
+  </body>
+</html>

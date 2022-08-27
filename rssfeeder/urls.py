@@ -1,9 +1,19 @@
-from django.urls import path
-from .views import index, SearchResults
+from django.urls import path, re_path
+from .views import index, SearchResults, LoginView, LogoutView
 
 
 urlpatterns = [
-    path("", index, name="defaultpage"),
+    re_path(
+        r'^login/$',
+        LoginView.as_view(),
+        name='login'
+    ),
+    re_path(
+        r'^logout/$',
+        LogoutView.as_view(),
+        name='logout'
+    ),
+    path("", index, name="home"),
     path("news", index, name="newspage"),
     path("tech", index, name="techpage"),
     path("videos", index, name="videospage"),

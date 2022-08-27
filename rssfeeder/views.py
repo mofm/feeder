@@ -1,8 +1,11 @@
 from django.shortcuts import render
-from django.views.generic import ListView
+from django.contrib import messages
+from django.views.generic import ListView, TemplateView, View
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import redirect
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db.models import Q
 from .models import Feed
 
@@ -16,7 +19,8 @@ cat_data = {
 }
 
 
-@login_required(login_url='/admin/login/?next=/admin/')
+# @login_required(login_url='/login')
+@permission_required('rssfeeder.view_feed', login_url='/login')
 def index(request):
     posts = cat_data.get(request.path)
     p = Paginator(posts, 10)  # creating a paginator object
@@ -35,8 +39,9 @@ def index(request):
     return render(request, 'index.html', context)
 
 
-class SearchResults(LoginRequiredMixin, ListView):
-    login_url = '/admin/login/?next=/admin/'
+class SearchResults(PermissionRequiredMixin, ListView):
+    login_url = '/login'
+    permission_required = 'rssfeeder.view_feed'
     template_name = 'search.html'
     model = Feed
     context_object_name = "page_obj"
@@ -44,3 +49,40 @@ class SearchResults(LoginRequiredMixin, ListView):
     def get_queryset(self):
         query = self.request.GET.get("q")
         return Feed.objects.filter(Q(title__icontains=query) | Q(description__icontains=query))
+
+
+class LoginView(TemplateView, View):
+    template_name = 'login.html'
+
+    def get(self, request, *args, **kwargs):
+        return self.render_to_response({})
+
+    def post(self, request, *args, **kwargs):
+        user = authenticate(username=request.POST.get('username'),
+                            password=request.POST.get('password'))
+        next_url = request.POST.get('next')
+        if not next_url:
+            next_url = 'home'
+
+        if user is not None:
+            # the password verified for the user
+            if user.is_active:
+                login(request, user)
+                messages.success(request, "You are now logged in!")
+            else:
+                messages.warning(request, "The password is valid, but the account has been disabled!")
+        else:
+            # the authentication system was unable to verify the username and password
+            messages.warning(request, "The username and password were incorrect.")
+
+        return redirect(next_url)
+
+
+class LogoutView(View):
+    def post(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect('home')
+
+        logout(request)
+        messages.success(request, "You are now logged out!")
+        return redirect('home')
