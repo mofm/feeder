@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.models import User
-from django.views.generic import ListView, TemplateView, View
+from django.views.generic import TemplateView, View, ListView
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import permission_required
@@ -54,7 +54,11 @@ class SearchResults(PermissionRequiredMixin, ListView):
 
     def get_queryset(self):
         query = self.request.GET.get("q")
-        return Feed.objects.filter(Q(title__icontains=query) | Q(description__icontains=query))
+        if query:
+            object_list = self.model.objects.filter(
+                Q(title__icontains=query) | Q(description__icontains=query)
+            )
+            return object_list
 
 
 class LoginView(TemplateView, View):
@@ -102,7 +106,10 @@ def userfavorites(request):
     return render(request, 'favorites.html', context)
 
 
-class AddFavorite(View):
+class AddFavorite(PermissionRequiredMixin, View):
+    login_url = '/login'
+    permission_required = 'rssfeeder.view_feed'
+
     def post(self, request, *args, **kwargs):
         user = User.objects.get(id=request.user.id)
         feed = Feed.objects.get(pk=request.POST.get('pk'))
