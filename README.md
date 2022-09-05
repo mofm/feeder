@@ -179,5 +179,5 @@ Finally, you can test out the application by browsing to http://localhost:8000/
 - This is personal project. So It may have missing features.
 - You can create users and permissions for viewing and editing feeds via admin interface.(rssfeeder.view_feed)
 - Homepage shows the feeds in the default category. If category key doesn't exist or empty value in feed.ini section, it shows the feeds in the default category.
-- Four default categories are Tech, Science, News and Videos. But didn't create an object in categories for them. If you want to use them, you can create these categories in the admin interface.
+- Four categories are Tech, Science, News and Videos hardcoded in the application 'url.py' file. But didn't create an object in categories for them. If you want to use them, you can create these categories in the admin interface.
 - You can add new categories in the admin interface. Also, you can add navbar.html file in the templates directory to customize the application.
