@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 
 class Category(models.Model):
@@ -21,3 +22,9 @@ class Feed(models.Model):
 
     def __str__(self) -> str:
         return f"{self.channel_name}: {self.title}"
+
+
+class UserFavorites(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    created_on = models.DateTimeField(auto_now_add=True)
+    favorites = models.ForeignKey(Feed, on_delete=models.PROTECT, related_name='favorites', blank=False)
