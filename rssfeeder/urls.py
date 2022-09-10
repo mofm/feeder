@@ -1,5 +1,6 @@
 from django.urls import path, re_path
-from .views import index, SearchResults, LoginView, LogoutView, userfavorites, AddFavorite
+from .views import index, SearchResults, LoginView, LogoutView, userfavorites, \
+    AddFavorite, profile, ChangePasswordView
 
 
 urlpatterns = [
@@ -21,4 +22,6 @@ urlpatterns = [
     path("search/", SearchResults.as_view(), name="search"),
     path("favorites", userfavorites, name="favorites"),
     path("favops", AddFavorite.as_view(), name="favops"),
+    path("profile/<username>", profile, name="profile"),
+    path('password-change/', ChangePasswordView.as_view(), name='password_change'),
 ]

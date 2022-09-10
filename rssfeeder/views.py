@@ -1,13 +1,17 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth.models import User
 from django.views.generic import TemplateView, View, ListView
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import permission_required
-from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib.auth import authenticate, login, logout, get_user_model
+from django.contrib.auth.decorators import permission_required, login_required
+from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
+from django.contrib.auth.views import PasswordChangeView
+from django.urls import reverse_lazy
 from django.db.models import Q
 from .models import Feed, UserFavorites, Category
+from .forms import UserUpdateForm
 
 
 def catdata():
@@ -57,7 +61,7 @@ class SearchResults(PermissionRequiredMixin, ListView):
         if query:
             object_list = self.model.objects.filter(
                 Q(title__icontains=query) | Q(description__icontains=query)
-            )
+            ).distinct()
             return object_list
 
 
@@ -101,7 +105,7 @@ class LogoutView(View):
 @permission_required('rssfeeder.view_feed', login_url='/login')
 def userfavorites(request):
     user = request.user.id
-    posts = UserFavorites.objects.filter(user=user)
+    posts = UserFavorites.objects.filter(user=user).order_by("-created_on")
     context = paginate(posts, request)
     return render(request, 'favorites.html', context)
 
@@ -122,3 +126,35 @@ class AddFavorite(PermissionRequiredMixin, View):
             messages.success(request, "Feed removed from favorites!")
 
         return redirect(request.META.get('HTTP_REFERER'))
+
+
+@login_required(login_url='/login')
+def profile(request, username):
+    if request.method == "POST":
+        user = request.user
+        form = UserUpdateForm(request.POST, request.FILES, instance=user)
+        if form.is_valid():
+            user_form = form.save()
+            messages.success(request, f'{user_form.username}, Your profile has been updated!')
+            return redirect("profile", user_form.username)
+
+        for error in list(form.errors.values()):
+            messages.error(request, error)
+
+    user = get_user_model().objects.filter(username=username).first()
+    if user:
+        form = UserUpdateForm(instance=user)
+        return render(
+            request=request,
+            template_name="profile.html",
+            context={"form": form}
+        )
+
+    return redirect("home")
+
+
+class ChangePasswordView(LoginRequiredMixin, SuccessMessageMixin, PasswordChangeView):
+    login_url = '/login'
+    template_name = 'change_password.html'
+    success_message = "Successfully Changed Your Password"
+    success_url = reverse_lazy('home')
