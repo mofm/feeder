@@ -1,76 +1,39 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
+{% extends 'base.html' %}
+{% block content %}
     {% load static %}
-    <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Feeder</title>
-    <link
-            rel="stylesheet"
-            href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
-            integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z"
-            crossorigin="anonymous"
-    />
-    <link rel="stylesheet" href="{% static 'main.css' %}"/>
-</head>
-<body class="d-flex flex-column">
-
-<header>
-    {% block navbar %}
-        {% include  '_items/navbar.html' %}
-    {% endblock %}
-</header>
-
-<main class="container flex-grow-1">
-    <div class="row">
-        <div class="col">
-            {% for feed in page_obj %}
-                <section class="card mb-3">
-                    <div class="row no-gutters">
-                        <div class="col-md-10">
-                            <div class="card-body ml-3">
-                                <h6 class="card-title">
-                                    <a href="{{ feed.favorites.link }}" class="text-primary"
-                                       target="_blank">{{ feed.favorites.title }}</a>
-                                    <span class="badge badge-secondary">{{ feed.favorites.category }}</span>
-                                </h6>
-                                <p class="card-text"><small class="text-muted">Added: {{ feed.created_on | date:"d/m/Y G:i" }}</small></p>
-                                <form method='POST' action="{% url 'favops' %}">
-                                    {% csrf_token %}
-                                    <input name="pk" id="pk" type="hidden" value={{ feed.favorites.pk }}>
-                                    <button type="submit" name="removefavorite" class="btn btn-danger btn-sm">Delete
-                                    </button>
-                                </form>
+    <main class="container flex-grow-1">
+        <div class="row">
+            <div class="col">
+                {% for feed in page_obj %}
+                    <section class="card mb-3">
+                        <div class="row no-gutters">
+                            <div class="col-md-10">
+                                <div class="card-body ml-3">
+                                    <h6 class="card-title">
+                                        <a href="{{ feed.favorites.link }}" class="text-primary"
+                                           target="_blank">{{ feed.favorites.title }}</a>
+                                        <span class="badge badge-secondary">{{ feed.favorites.category }}</span>
+                                    </h6>
+                                    <p class="card-text"><small
+                                            class="text-muted">Added: {{ feed.created_on | date:"d/m/Y G:i" }}</small>
+                                    </p>
+                                    <form method='POST' action="{% url 'favops' %}">
+                                        {% csrf_token %}
+                                        <input name="pk" id="pk" type="hidden" value={{ feed.favorites.pk }}>
+                                        <button type="submit" name="removefavorite" class="btn btn-danger btn-sm">Delete
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
+                    </section>
+                {% empty %}
+                    <div class="vh-100 d-flex align-items-center justify-content-center">
+                        <div><h3>No results found. Try again.</h3></div>
                     </div>
-                </section>
-            {% empty %}
-                <div class="vh-100 d-flex align-items-center justify-content-center">
-                    <div><h3>No results found. Try again.</h3></div>
-                </div>
-            {% endfor %}
-            {% include "_items/pagination.html" %}
+                {% endfor %}
+                {% include "_items/pagination.html" %}
+            </div>
         </div>
-    </div>
-</main>
-
-<footer class="container-fluid bg-dark">
-    <div class="row">
-        <div class="col text-center">
-            <img src="{% static 'imgs/python-powered.svg' %}" alt="Python Powered" height="50px"/>
-        </div>
-    </div>
-</footer>
-
-<!-- jquery -->
-<script src="//code.jquery.com/jquery-1.12.4.min.js"></script>
-<script src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
-<!-- [/] jquery -->
-<script
-        src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"
-        integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV"
-        crossorigin="anonymous"
-></script>
-</body>
-</html>
+    </main>
+{% endblock %}

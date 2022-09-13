@@ -3,7 +3,7 @@ import logging
 import configparser
 
 from feeder.settings import BASE_DIR
-from ..tools.htmlfeed import strip_tags, get_links
+from utils.htmlfeed import strip_tags, get_links
 
 # Django
 from django.conf import settings
