@@ -23,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 try:
     SECRET_KEY = os.environ.get("SECRET_KEY")
-    DEBUG = os.environ['DEBUG'] == 'TRUE'
+    DEBUG = True if os.environ.get("DEBUG") == "True" else False
     ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS").split(" ")
 except KeyError as e:
     raise RuntimeError("Could not find variable(s) in environment") from e

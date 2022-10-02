@@ -1,14 +1,15 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect
+from django.http import Http404
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth.models import User
 from django.views.generic import TemplateView, View, ListView
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.contrib.auth import authenticate, login, logout, get_user_model
-from django.contrib.auth.decorators import permission_required, login_required
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
 from django.contrib.auth.views import PasswordChangeView
 from django.urls import reverse_lazy
+from django.db import IntegrityError
 from django.db.models import Q
 from .models import Feed, UserFavorites, Category
 from .forms import UserUpdateForm
@@ -41,20 +42,41 @@ def paginate(posts, request):
     return context
 
 
-@permission_required('rssfeeder.view_feed', login_url='/login')
-def index(request):
-    posts = catdata().get(request.path)
-    context = paginate(posts, request)
-    # sending the page object to index.html
-    return render(request, 'index.html', context)
+class IndexView(PermissionRequiredMixin, TemplateView):
+    login_url = '/login'
+    permission_required = 'rssfeeder.view_feed'
+    template_name = 'index.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        posts = catdata().get(self.request.path)
+        if posts:
+            context.update(paginate(posts, self.request))
+        else:
+            context.update({'page_obj': None})
+        return context
 
 
-class SearchResults(PermissionRequiredMixin, ListView):
+class ChannelView(PermissionRequiredMixin, TemplateView):
+    login_url = '/login'
+    permission_required = 'rssfeeder.view_feed'
+    template_name = 'index.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        posts = Feed.objects.filter(channel_name=self.kwargs['channel']).order_by("-pub_date")
+        if posts:
+            context.update(paginate(posts, self.request))
+        else:
+            raise Http404("Channel does not exist")
+        return context
+
+
+class SearchResults(PermissionRequiredMixin, TemplateView):
     login_url = '/login'
     permission_required = 'rssfeeder.view_feed'
     template_name = 'search.html'
     model = Feed
-    context_object_name = "page_obj"
 
     def get_queryset(self):
         query = self.request.GET.get("q")
@@ -63,6 +85,12 @@ class SearchResults(PermissionRequiredMixin, ListView):
                 Q(title__icontains=query) | Q(description__icontains=query)
             ).distinct()
             return object_list
+        return []
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(paginate(self.get_queryset().order_by('pub_date'), self.request))
+        return context
 
 
 class LoginView(TemplateView, View):
@@ -72,8 +100,8 @@ class LoginView(TemplateView, View):
         return self.render_to_response({})
 
     def post(self, request, *args, **kwargs):
-        user = authenticate(username=request.POST.get('username'),
-                            password=request.POST.get('password'))
+        user = authenticate(username=self.request.POST.get('username'),
+                            password=self.request.POST.get('password'))
         next_url = request.POST.get('next')
         if not next_url:
             next_url = 'home'
@@ -94,7 +122,7 @@ class LoginView(TemplateView, View):
 
 class LogoutView(View):
     def post(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
+        if not self.request.user.is_authenticated:
             return redirect('home')
 
         logout(request)
@@ -102,12 +130,21 @@ class LogoutView(View):
         return redirect('home')
 
 
-@permission_required('rssfeeder.view_feed', login_url='/login')
-def userfavorites(request):
-    user = request.user.id
-    posts = UserFavorites.objects.filter(user=user).order_by("-created_on")
-    context = paginate(posts, request)
-    return render(request, 'favorites.html', context)
+class UserFavoritesView(PermissionRequiredMixin, ListView):
+    login_url = '/login'
+    permission_required = 'rssfeeder.view_feed'
+    template_name = 'favorites.html'
+    model = UserFavorites
+
+    def get_queryset(self):
+        user = self.request.user.id
+        object_list = self.model.objects.filter(user=user).order_by("-created_on")
+        return object_list
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(paginate(self.get_queryset(), self.request))
+        return context
 
 
 class AddFavorite(PermissionRequiredMixin, View):
@@ -115,8 +152,8 @@ class AddFavorite(PermissionRequiredMixin, View):
     permission_required = 'rssfeeder.view_feed'
 
     def post(self, request, *args, **kwargs):
-        user = User.objects.get(id=request.user.id)
-        feed = Feed.objects.get(pk=request.POST.get('pk'))
+        user = User.objects.get(id=self.request.user.id)
+        feed = Feed.objects.get(pk=self.request.POST.get('pk'))
 
         if 'addfavorite' in request.POST:
             UserFavorites.objects.get_or_create(user=user, favorites=feed)
@@ -128,29 +165,26 @@ class AddFavorite(PermissionRequiredMixin, View):
         return redirect(request.META.get('HTTP_REFERER'))
 
 
-@login_required(login_url='/login')
-def profile(request, username):
-    if request.method == "POST":
-        user = request.user
-        form = UserUpdateForm(request.POST, request.FILES, instance=user)
-        if form.is_valid():
-            user_form = form.save()
-            messages.success(request, f'{user_form.username}, Your profile has been updated!')
-            return redirect("profile", user_form.username)
+class ProfileView(LoginRequiredMixin, TemplateView):
+    login_url = '/login'
+    template_name = 'profile.html'
 
-        for error in list(form.errors.values()):
-            messages.error(request, error)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        profile_form = UserUpdateForm(self.request.POST or None, instance=self.request.user)
+        context.update({'form': profile_form})
+        return context
 
-    user = get_user_model().objects.filter(username=username).first()
-    if user:
-        form = UserUpdateForm(instance=user)
-        return render(
-            request=request,
-            template_name="profile.html",
-            context={"form": form}
-        )
+    def post(self, request, *args, **kwargs):
+        context = self.get_context_data()
+        try:
+            if 'profile_form' in request.POST and context['profile_form'].is_valid():
+                context['profile_form'].save()
+                messages.success(request, "Profile updated successfully!")
+        except IntegrityError:
+            messages.warning(request, "Email already exists!")
 
-    return redirect("home")
+        return self.render_to_response(context)
 
 
 class ChangePasswordView(LoginRequiredMixin, SuccessMessageMixin, PasswordChangeView):

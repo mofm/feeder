@@ -34,7 +34,7 @@
                                     </form>
                                     <p></p>
                                     <div class="card-footer text-muted">
-                                        {{ feed.channel_name }}
+                                        <a href="{% url 'channel' feed.channel_name %}">{{ feed.channel_name }}</a>
                                     </div>
                                 </div>
                             </div>

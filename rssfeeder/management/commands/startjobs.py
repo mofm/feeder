@@ -40,7 +40,7 @@ def save_new_feeds(feed, title, image, category):
     """
     html_types = ["text/html", "application/xhtml+xml"]
     img_tags = ['thumbnail', 'media_thumbnail', 'media_content']
-    feed_img = "static/imgs/news.png"
+    feed_img = "/static/imgs/news.png"
 
     for item in feed.entries:
         if not Feed.objects.filter(guid=item.guid).exists():
