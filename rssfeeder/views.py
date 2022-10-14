@@ -19,9 +19,10 @@ def catdata():
     cat_data = {}
     for cat in Category.objects.all():
         if cat.name == 'Default':
-            cat_data['/'] = Feed.objects.filter(category__name='Default').order_by("-pub_date")
+            cat_data['/'] = Feed.objects.filter(category__id=cat.id).select_related('category').order_by("-pub_date")
         else:
-            cat_data[f"/{cat.name}"] = Feed.objects.filter(category__name=cat.name).order_by("-pub_date")
+            cat_data[f"/{cat.name}"] = \
+                Feed.objects.filter(category__id=cat.id).select_related('category').order_by("-pub_date")
 
     return cat_data
 

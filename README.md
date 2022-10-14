@@ -62,6 +62,7 @@ ALLOWED_HOSTS=127.0.0.1 feeder.example.com
 
 ```bash
 python manage.py makemigrations
+python manage.py migrate
 python manage.py migrate --run-syncdb
 ```
 

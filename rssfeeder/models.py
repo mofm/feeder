@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.validators import URLValidator
 from django.contrib.auth.models import User
 
 
@@ -13,7 +14,7 @@ class Feed(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField()
     pub_date = models.DateTimeField()
-    link = models.URLField()
+    link = models.TextField(validators=[URLValidator()])
     channel_img = models.URLField()
     feed_img = models.URLField()
     channel_name = models.CharField(max_length=100)

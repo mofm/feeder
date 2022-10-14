@@ -1,7 +1,8 @@
 # Standard Library
 import logging
 import configparser
-
+import multiprocessing as mp
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from feeder.settings import BASE_DIR
 from utils.htmlfeed import strip_tags, get_links
 
@@ -20,76 +21,87 @@ from django_apscheduler.models import DjangoJobExecution
 # Models
 from rssfeeder.models import Feed, Category
 
+# added for macOS compatibility. Because macOS default method: spawn
+mp.set_start_method('fork')
 
 logger = logging.getLogger(__name__)
 config = configparser.ConfigParser()
 config.read(BASE_DIR.joinpath('feed.ini'))
 
 
-def save_new_feeds(feed, title, image, category):
+def save_new_feeds(item, title, image, category):
     """Saves new feed to the database.
 
     Checks the feed GUID against the feeds currently stored in the
     database. If not found, then a new `feed` is added to the database.
 
     Args:
-        feed: requires a feedparser object
+        item: requires a feedparser object
         category: requires a category
         title: title of the feed
         image: channel image
     """
-    html_types = ["text/html", "application/xhtml+xml"]
-    img_tags = ['thumbnail', 'media_thumbnail', 'media_content']
+    html_types = {'text/html', 'application/xhtml+xml'}
+    img_tags = {'thumbnail', 'media_thumbnail', 'media_content'}
     feed_img = "/static/imgs/news.png"
-
-    for item in feed.entries:
-        if not Feed.objects.filter(guid=item.guid).exists():
-            try:
-                for k, v in item.items():
-                    if k in img_tags and v is not None:
-                        if isinstance(v, list):
-                            feed_img = v[0]['url']
-                        else:
-                            feed_img = v['url']
-                    else:
-                        if item.summary_detail.type in html_types:
-                            imgs = get_links(item.description)
-                            if imgs:
-                                feed_img = imgs[0]
-                            item.description = strip_tags(item.description)
-
-                episode = Feed(
-                    title=item.title,
-                    description=item.description,
-                    pub_date=parser.parse(item.published),
-                    link=item.link,
-                    channel_img=image,
-                    feed_img=feed_img,
-                    channel_name=title,
-                    guid=item.guid,
-                    category=category,
-                )
-                episode.save()
-            except AttributeError:
-                pass
-
-
-def fetch_feeds():
-    """ Fetches new episodes from config ini file"""
-    for e in config.sections():
-        # Get section values. If no value is found, skip section.
-        # get category from feed.ini file. If not found, then use default category
+    # Check if feed exists in the database
+    if not Feed.objects.filter(guid=item.guid).exists():
         try:
-            _feed = feedparser.parse(config[e]['feed'])
-            feed_title = config[e]['title']
-            feed_logo = config[e]['logo']
-            feed_cat = Category.objects.get(name=config[e]['category'])
-        except KeyError:
-            continue
-        except Category.DoesNotExist:
-            feed_cat = Category.objects.get_or_create(name="Default")[0]
+            for k, v in item.items():
+                if k in img_tags and v is not None:
+                    if isinstance(v, list):
+                        feed_img = v[0]['url']
+                    else:
+                        feed_img = v['url']
+                else:
+                    if item.summary_detail.type in html_types:
+                        imgs = get_links(item.description)
+                        if imgs:
+                            feed_img = imgs[0]
+                        item.description = strip_tags(item.description)
 
-        save_new_feeds(_feed, feed_title, feed_logo, feed_cat)
+            episode = Feed(
+                title=item.title,
+                description=item.description,
+                pub_date=parser.parse(item.published),
+                link=item.link,
+                channel_img=image,
+                feed_img=feed_img,
+                channel_name=title,
+                guid=item.guid,
+                category=category,
+            )
+            return episode
+        except AttributeError:
+            pass
+
+
+def fetch_feeds(section):
+    """ Fetches new episodes from config ini file"""
+    try:
+        _feed = feedparser.parse(config[section]['feed'])
+        feed_title = config[section]['title']
+        feed_logo = config[section]['logo']
+        feed_cat = Category.objects.get(name=config[section]['category'])
+    except KeyError:
+        pass
+    except Category.DoesNotExist:
+        feed_cat = Category.objects.get_or_create(name=config[section]['category'])[0]
+
+    return _feed, feed_title, feed_logo, feed_cat
+
+
+def save_rss():
+    """Saves RSS Feeds"""
+    futures = []
+    with ThreadPoolExecutor() as executor:
+        for section in config.sections():
+            feed, title, image, category = fetch_feeds(section)
+            for item in feed.entries:
+                futures.append(executor.submit(save_new_feeds, item, title, image, category))
+
+    Feed.objects.bulk_create([future.result() for future in as_completed(futures)
+                              if future.result()], batch_size=1000)
 
 
 def delete_old_job_executions(max_age=604_800):
@@ -105,9 +117,9 @@ class Command(BaseCommand):
         scheduler.add_jobstore(DjangoJobStore(), "default")
 
         scheduler.add_job(
-            fetch_feeds,
+            save_rss,
             trigger="interval",
-            minutes=2,
+            minutes=1,
             id="FetchFeeds",
             max_instances=1,
             replace_existing=True,
