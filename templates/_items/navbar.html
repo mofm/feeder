@@ -18,6 +18,9 @@
             <li class="nav-item active">
                 <a class="nav-link" href="/science">Science</a>
             </li>
+            <li class="nav-item active">
+                <a class="nav-link" href="/political">Political</a>
+            </li>
         </ul>
         <form action="{% url 'search' %}" class="form-inline my-2 my-lg-0" method="get">
             <input class="form-control mr-sm-2" type="search" name="q" placeholder="Search" aria-label="Search">
@@ -30,6 +33,7 @@
                         {{ user.username }}
                     </a>
                     <div class="dropdown-menu dropdown-menu-right bg-dark" aria-labelledby="navbarDropdownMenuLink">
+                        <a class="dropdown-item text-primary" href="/channels">Channels</a>
                         <a class="dropdown-item text-primary" href="/profile/{{ user.username }}">Profile</a>
                         <a class="dropdown-item text-primary" href="/favorites">Favorites</a>
                         <form class="form-inline" action="{% url 'logout' %}" method="POST">

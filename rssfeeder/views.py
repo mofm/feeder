@@ -73,6 +73,21 @@ class ChannelView(PermissionRequiredMixin, TemplateView):
         return context
 
 
+class ChannelList(PermissionRequiredMixin, TemplateView):
+    login_url = '/login'
+    permission_required = 'rssfeeder.view_feed'
+    template_name = 'channels.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        posts = Feed.objects.values('channel_name').distinct().order_by('channel_name')
+        if posts:
+            context.update(paginate(posts, self.request))
+        else:
+            raise Http404("Channel does not exist")
+        return context
+
+
 class SearchResults(PermissionRequiredMixin, TemplateView):
     login_url = '/login'
     permission_required = 'rssfeeder.view_feed'

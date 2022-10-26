@@ -1,6 +1,6 @@
 from django.urls import path, re_path
 from .views import IndexView, SearchResults, LoginView, LogoutView, UserFavoritesView, \
-    AddFavorite, ProfileView, ChangePasswordView, ChannelView
+    AddFavorite, ProfileView, ChangePasswordView, ChannelView, ChannelList
 
 
 urlpatterns = [
@@ -16,10 +16,12 @@ urlpatterns = [
     ),
     path("", IndexView.as_view(), name="home"),
     path("channel/<str:channel>", ChannelView.as_view(), name="channel"),
+    path("channels", ChannelList.as_view(), name="channels"),
     path("news", IndexView.as_view(), name="newspage"),
     path("tech", IndexView.as_view(), name="techpage"),
     path("videos", IndexView.as_view(), name="videospage"),
     path("science", IndexView.as_view(), name="sciencepage"),
+    path("political", IndexView.as_view(), name="politicalpage"),
     path("search/", SearchResults.as_view(), name="search"),
     path("favorites", UserFavoritesView.as_view(), name="favorites"),
     path("favops", AddFavorite.as_view(), name="favops"),

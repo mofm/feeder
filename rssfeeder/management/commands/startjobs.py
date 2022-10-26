@@ -119,7 +119,7 @@ class Command(BaseCommand):
         scheduler.add_job(
             save_rss,
             trigger="interval",
-            minutes=1,
+            minutes=5,
             id="FetchFeeds",
             max_instances=1,
             replace_existing=True,
