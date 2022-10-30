@@ -5,31 +5,7 @@
         <div class="row">
             <div class="col">
                 {% for feed in page_obj %}
-                    <section class="card mb-3">
-                        <div class="row no-gutters">
-                            <div class="col-md-2 my-auto">
-                                <img
-                                        src="{{ feed.feed_img }}"
-                                        class="img-fluid mx-auto d-block"
-                                        alt="{{ feed.channel_name }}"
-                                />
-                            </div>
-                            <div class="col-md-10">
-                                <div class="card-body ml-3">
-                                    <h3 class="card-title">{{ feed.title }}</h3>
-                                    <p class="card-text">{{ feed.description }}</p>
-                                    <p class="card-text"><small
-                                            class="text-muted">{{ feed.pub_date | date:"d/m/Y G:i" }}</small></p>
-                                    <a href="{{ feed.link }}" target="_blank">
-                                        <p class="btn btn-primary">Read more...</p>
-                                    </a>
-                                    <div class="card-footer text-muted">
-                                        {{ feed.channel_name }}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
+                    {% include "_items/feed.html" %}
                 {% empty %}
                     <div class="vh-100 d-flex align-items-center justify-content-center">
                         <div><h3>No results found. Try again.</h3></div>
