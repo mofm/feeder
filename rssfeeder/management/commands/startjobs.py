@@ -13,6 +13,7 @@ from django.core.management.base import BaseCommand
 # Third Party
 import feedparser
 from dateutil import parser
+from datetime import datetime, timedelta
 from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.triggers.cron import CronTrigger
 from django_apscheduler.jobstores import DjangoJobStore
@@ -46,6 +47,7 @@ def save_new_feeds(item, title, image, category):
     feed_img = "/static/imgs/news.png"
     # Check if feed exists in the database
     if not Feed.objects.filter(guid=item.guid).exists():
+        logger.info("Processing: {}".format(item.title))
         try:
             for k, v in item.items():
                 if k in img_tags and v is not None:
@@ -63,7 +65,11 @@ def save_new_feeds(item, title, image, category):
             episode = Feed(
                 title=item.title,
                 description=item.description,
-                pub_date=parser.parse(item.published),
+                # as of version 5.1.1, feedparser returns a datetime object
+                # if this key doesn’t exist but entries[i].published does,
+                # the value of entries[i].published will be returned.
+                # changed to use updated_parsed instead of published_parsed
+                pub_date=parser.parse(item.updated),
                 link=item.link,
                 channel_img=image,
                 feed_img=feed_img,
@@ -71,8 +77,10 @@ def save_new_feeds(item, title, image, category):
                 guid=item.guid,
                 category=category,
             )
+            logger.info("Saving: {}".format(item.title))
             return episode
-        except AttributeError:
+        except AttributeError as exc:
+            logger.error("Error saving the feed {}: {}".format(item.guid, exc))
             pass
 
 
@@ -83,7 +91,8 @@ def fetch_feeds(section):
         feed_title = config[section]['title']
         feed_logo = config[section]['logo']
         feed_cat = Category.objects.get(name=config[section]['category'])
-    except KeyError:
+    except KeyError as exc:
+        logger.warning("Error fetching {}: {}".format(section, exc))
         pass
     except Category.DoesNotExist:
         feed_cat = Category.objects.get_or_create(name=config[section]['category'])[0]
@@ -96,12 +105,19 @@ def save_rss():
     futures = []
     with ThreadPoolExecutor() as executor:
         for section in config.sections():
+            logger.info("Fetching {}".format(section))
             feed, title, image, category = fetch_feeds(section)
             for item in feed.entries:
                 futures.append(executor.submit(save_new_feeds, item, title, image, category))
 
+    logger.info("Saving bulk feeds")
     Feed.objects.bulk_create([future.result() for future in as_completed(futures)
-                              if future.result()], batch_size=1000)
+                              if future.result()], batch_size=1000, ignore_conflicts=True)
+
+
+def delete_old_feeds(max_days=30):
+    """Deletes all feeds older than `max_age`."""
+    Feed.objects.filter(pub_date__lte=datetime.now()-timedelta(days=max_days)).delete()
 
 
 def delete_old_job_executions(max_age=604_800):
@@ -119,7 +135,7 @@ class Command(BaseCommand):
         scheduler.add_job(
             save_rss,
             trigger="interval",
-            minutes=5,
+            minutes=30,
             id="FetchFeeds",
             max_instances=1,
             replace_existing=True,
@@ -132,6 +148,17 @@ class Command(BaseCommand):
                 day_of_week="mon", hour="00", minute="00"
             ),  # Midnight on Monday, before start of the next work week.
             id="Delete Old Job Executions",
+            max_instances=1,
+            replace_existing=True,
+        )
+        logger.info("Added weekly job: Delete Old Job Executions.")
+
+        scheduler.add_job(
+            delete_old_feeds,
+            trigger=CronTrigger(
+                hour="00", minute="30"
+            ),  # every day at 00:30
+            id="Delete Old News Feeds",
             max_instances=1,
             replace_existing=True,
         )
