@@ -3,3 +3,4 @@ feedparser~=6.0.10
 python-dateutil~=2.8.2
 django_apscheduler~=0.6.2
 gunicorn~=20.1.0
+aiohttp ~=3.10.5

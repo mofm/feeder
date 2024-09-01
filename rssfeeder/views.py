@@ -15,14 +15,22 @@ from .models import Feed, UserFavorites, Category
 from .forms import UserUpdateForm
 
 
-def catdata():
+def catdata(page_number=1, per_page=10):
     cat_data = {}
     for cat in Category.objects.all():
+        feeds = Feed.objects.filter(category__id=cat.id).select_related('category').order_by("-pub_date")
+        paginator = Paginator(feeds, per_page)
+        try:
+            page_obj = paginator.page(page_number)
+        except PageNotAnInteger:
+            page_obj = paginator.page(1)
+        except EmptyPage:
+            page_obj = paginator.page(paginator.num_pages)
+
         if cat.name == 'Default':
-            cat_data['/'] = Feed.objects.filter(category__id=cat.id).select_related('category').order_by("-pub_date")
+            cat_data['/'] = page_obj
         else:
-            cat_data[f"/{cat.name}"] = \
-                Feed.objects.filter(category__id=cat.id).select_related('category').order_by("-pub_date")
+            cat_data[f"/{cat.name}"] = page_obj
 
     return cat_data
 
@@ -50,9 +58,10 @@ class IndexView(PermissionRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        posts = catdata().get(self.request.path)
+        page_number = self.request.GET.get('page', 1)
+        posts = catdata(page_number=page_number).get(self.request.path)
         if posts:
-            context.update(paginate(posts, self.request))
+            context.update({'page_obj': posts})
         else:
             context.update({'page_obj': None})
         return context
