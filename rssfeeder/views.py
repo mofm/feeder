@@ -11,46 +11,43 @@ from django.contrib.auth.views import PasswordChangeView
 from django.urls import reverse_lazy
 from django.db import IntegrityError
 from django.db.models import Q
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 from .models import Feed, UserFavorites, Category
 from .forms import UserUpdateForm
 
 
-def catdata(page_number=1, per_page=10):
+def catdata(request, per_page=10):
     cat_data = {}
     for cat in Category.objects.all():
         feeds = Feed.objects.filter(category__id=cat.id).select_related('category').order_by("-pub_date")
-        paginator = Paginator(feeds, per_page)
-        try:
-            page_obj = paginator.page(page_number)
-        except PageNotAnInteger:
-            page_obj = paginator.page(1)
-        except EmptyPage:
-            page_obj = paginator.page(paginator.num_pages)
-
         if cat.name == 'Default':
-            cat_data['/'] = page_obj
+            cat_data['/'] = paginate(feeds, request, per_page)
         else:
-            cat_data[f"/{cat.name}"] = page_obj
-
+            cat_data[f"/{cat.name}"] = paginate(feeds, request, per_page)
     return cat_data
 
 
-def paginate(posts, request):
-    p = Paginator(posts, 10)  # creating a paginator object
-    # getting the desired page number from url
-    page_number = request.GET.get('page')
+def paginate(queryset, request, per_page=10):
+    paginator = Paginator(queryset, per_page)
+    page_number = request.GET.get('page', 1)
     try:
-        page_obj = p.get_page(page_number)  # returns the desired page object
+        page_obj = paginator.page(page_number)
     except PageNotAnInteger:
-        # if page_number is not an integer then assign the first page
-        page_obj = p.page(1)
+        page_obj = paginator.page(1)
     except EmptyPage:
-        # if page is empty then return last page
-        page_obj = p.page(p.num_pages)
-    context = {'page_obj': page_obj}
+        page_obj = paginator.page(paginator.num_pages)
+
+    context = {
+        'page_obj': page_obj,
+        'is_paginated': page_obj.has_other_pages(),
+        'page_number': page_number,
+        'total_pages': paginator.num_pages,
+    }
     return context
 
 
+@method_decorator(cache_page(60 * 15), name='dispatch')
 class IndexView(PermissionRequiredMixin, TemplateView):
     login_url = '/login'
     permission_required = 'rssfeeder.view_feed'
@@ -58,15 +55,12 @@ class IndexView(PermissionRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        page_number = self.request.GET.get('page', 1)
-        posts = catdata(page_number=page_number).get(self.request.path)
-        if posts:
-            context.update({'page_obj': posts})
-        else:
-            context.update({'page_obj': None})
+        cat_data = catdata(self.request)
+        context.update(cat_data.get(self.request.path, {'page_obj': None}))
         return context
 
 
+@method_decorator(cache_page(60 * 15), name='dispatch')
 class ChannelView(PermissionRequiredMixin, TemplateView):
     login_url = '/login'
     permission_required = 'rssfeeder.view_feed'
@@ -74,7 +68,7 @@ class ChannelView(PermissionRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        posts = Feed.objects.filter(channel_name=self.kwargs['channel']).order_by("-pub_date")
+        posts = Feed.objects.filter(channel_name=self.kwargs['channel']).select_related('category').order_by("-pub_date")
         if posts:
             context.update(paginate(posts, self.request))
         else:
