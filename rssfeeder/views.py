@@ -99,16 +99,34 @@ class SearchResults(PermissionRequiredMixin, TemplateView):
 
     def get_queryset(self):
         query = self.request.GET.get("q")
+        object_list = self.model.objects.all()
+
         if query:
-            object_list = self.model.objects.filter(
-                Q(title__icontains=query) | Q(description__icontains=query)
-            ).distinct()
-            return object_list
-        return []
+            parts = query.split(" ")
+            search_terms = []
+            category = None
+
+            for part in parts:
+                if part.startswith("cat:"):
+                    category = part[4:]
+                else:
+                    search_terms.append(part)
+
+            if search_terms:
+                search_query = " ".join(search_terms)
+                object_list = object_list.filter(
+                    Q(title__icontains=search_query) | Q(description__icontains=search_query)
+                ).distinct()
+
+            if category:
+                object_list = object_list.filter(category__name=category)
+
+        return object_list.order_by('-pub_date')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update(paginate(self.get_queryset().order_by('pub_date'), self.request))
+        context.update(paginate(self.get_queryset(), self.request))
+        context['categories'] = Category.objects.all()
         return context
 
 
