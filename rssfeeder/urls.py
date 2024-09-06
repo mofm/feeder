@@ -1,6 +1,6 @@
 from django.urls import path, re_path
 from .views import IndexView, SearchResults, LoginView, LogoutView, UserFavoritesView, \
-    AddFavorite, ProfileView, ChangePasswordView, ChannelView, ChannelList
+    AddFavorite, ProfileView, ChangePasswordView, ChannelView, ChannelList, mark_read_ajax
 
 
 urlpatterns = [
@@ -27,4 +27,5 @@ urlpatterns = [
     path("favops", AddFavorite.as_view(), name="favops"),
     path("profile/<username>", ProfileView.as_view(), name="profile"),
     path('password-change/', ChangePasswordView.as_view(), name='password_change'),
+    path('mark_read_ajax/', mark_read_ajax, name='mark_read_ajax'),
 ]

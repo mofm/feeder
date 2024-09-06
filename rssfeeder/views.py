@@ -1,5 +1,5 @@
-from django.shortcuts import redirect
-from django.http import Http404
+from django.shortcuts import redirect, get_object_or_404
+from django.http import Http404, JsonResponse
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth.models import User
@@ -11,10 +11,23 @@ from django.contrib.auth.views import PasswordChangeView
 from django.urls import reverse_lazy
 from django.db import IntegrityError
 from django.db.models import Q
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
+from django.views.decorators.http import require_POST
 from .models import Feed, UserFavorites, Category
 from .forms import UserUpdateForm
+import json
+
+
+@require_POST
+def mark_read_ajax(request):
+    try:
+        data = json.loads(request.body)
+        feed_id = data.get('feed_id')
+        feed = get_object_or_404(Feed, pk=feed_id)
+        feed.read = True
+        feed.save()
+        return JsonResponse({'status': 'success'})
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
 
 
 def catdata(request, per_page=10):
@@ -47,7 +60,6 @@ def paginate(queryset, request, per_page=10):
     return context
 
 
-@method_decorator(cache_page(60 * 15), name='dispatch')
 class IndexView(PermissionRequiredMixin, TemplateView):
     login_url = '/login'
     permission_required = 'rssfeeder.view_feed'
@@ -60,7 +72,6 @@ class IndexView(PermissionRequiredMixin, TemplateView):
         return context
 
 
-@method_decorator(cache_page(60 * 15), name='dispatch')
 class ChannelView(PermissionRequiredMixin, TemplateView):
     login_url = '/login'
     permission_required = 'rssfeeder.view_feed'

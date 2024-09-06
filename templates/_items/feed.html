@@ -1,4 +1,4 @@
-<div class="card-deck mb-3">
+<div class="card-deck mb-3" data-feed-id="{{ feed.pk }}">
     <div class="card">
         <div class="row no-gutters">
             <div class="col-md-2 my-auto">
@@ -28,9 +28,18 @@
                                 </button>
                             </form>
                         </div>
-                        <button class="btn btn-secondary btn-sm share-button" data-url="{{ feed.link }}">
-                            <i class="fas fa-share"></i> Share
-                        </button>
+                        <div>
+                            <button class="btn btn-secondary btn-sm" disabled>
+                                {% if feed.read %}
+                                    <i class="fas fa-check-circle"></i> Read
+                                {% else %}
+                                    <i class="far fa-circle"></i> Unread
+                                {% endif %}
+                            </button>
+                            <button class="btn btn-secondary btn-sm share-button" data-url="{{ feed.link }}">
+                                <i class="fas fa-share"></i> Share
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div class="card-footer text-muted">

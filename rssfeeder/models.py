@@ -20,6 +20,7 @@ class Feed(models.Model):
     channel_name = models.CharField(max_length=100)
     guid = models.CharField(max_length=200)
     category = models.ForeignKey('Category', related_name='feeds', on_delete=models.CASCADE)
+    read = models.BooleanField(default=False)  # New field to track if the feed is read
 
     def __str__(self) -> str:
         return f"{self.channel_name}: {self.title}"
