@@ -24,29 +24,35 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-
+// Automatically mark feeds as read when they are in the viewport
 document.addEventListener('DOMContentLoaded', function () {
     if ('IntersectionObserver' in window) {
         const observerOptions = {
             root: null,
-            rootMargin: '0px',
+            rootMargin: '100px 0px',
             threshold: 0.5
         };
 
         const observer = new IntersectionObserver((entries, observer) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
-                    const feedId = entry.target.getAttribute('data-feed-id');
-                    if (feedId) {
-                        console.log(`Feed ID: ${feedId}`);  // Debugging log
+                    const feedElement = entry.target;
+                    const feedId = feedElement.getAttribute('data-feed-id');
+                    const readButton = feedElement.querySelector('.btn-secondary');
+
+                    // Check if the feed is already marked as read
+                    if (feedId && !readButton.innerHTML.includes('fa-check-circle')) {
+                        console.log(`Feed ID: ${feedId}`);
                         markAsRead(feedId);
-                        observer.unobserve(entry.target);
+                        observer.unobserve(feedElement);
                     }
                 }
             });
         }, observerOptions);
 
-        document.querySelectorAll('.card-deck').forEach(feed => {
+        // Use efficient selector to query elements
+        const feeds = document.querySelectorAll('.card-deck');
+        feeds.forEach(feed => {
             observer.observe(feed);
         });
     } else {
