@@ -4,35 +4,33 @@
     <main class="container flex-grow-1 py-4">
         <div class="row">
             <div class="col">
-                <div class="card-columns">
+                <ul class="list-group">
                     {% for feed in page_obj %}
-                        <section class="card mb-3 shadow-sm">
-                            <div class="card-body">
-                                <h6 class="card-title">
-                                    <a href="{{ feed.favorites.link }}" class="text-primary" target="_blank">{{ feed.favorites.title }}</a>
-                                    <span class="badge badge-secondary">{{ feed.favorites.category }}</span>
-                                </h6>
-                                <p class="card-text"><small class="text-muted">Added: {{ feed.created_on | date:"d/m/Y G:i" }}</small></p>
-                                <div class="d-flex justify-content-between">
-                                    <form method='POST' action="{% url 'favops' %}">
-                                        {% csrf_token %}
-                                        <input name="pk" id="pk" type="hidden" value={{ feed.favorites.pk }}>
-                                        <button type="submit" name="removefavorite" class="btn btn-danger btn-sm">
-                                            <i class="fas fa-trash-alt"></i> Delete
-                                        </button>
-                                    </form>
-                                    <button class="btn btn-secondary btn-sm share-button" data-url="{{ feed.favorites.link }}">
-                                        <i class="fas fa-share"></i> Share
-                                    </button>
-                                </div>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div class="text-truncate" style="max-width: 70%;">
+                                <a href="{{ feed.link }}" class="text-primary text-truncate" target="_blank">{{ feed.title }}</a>
+                                <small class="text-muted d-block">{{ feed.pub_date | date:"d/m/Y" }}</small>
+                                <span class="badge badge-secondary">{{ feed.category }}</span>
                             </div>
-                        </section>
+                            <div class="btn-group">
+                                <form method='POST' action="{% url 'favops' %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <input name="pk" id="pk" type="hidden" value="{{ feed.pk }}">
+                                    <button type="submit" name="removefavorite" class="btn btn-danger btn-sm">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </form>
+                                <button class="btn btn-secondary btn-sm share-button" data-url="{{ feed.link }}">
+                                    <i class="fas fa-share"></i>
+                                </button>
+                            </div>
+                        </li>
                     {% empty %}
-                        <div class="vh-100 d-flex align-items-center justify-content-center">
-                            <div><h3>No results found. Try again.</h3></div>
-                        </div>
+                        <li class="list-group-item text-center">
+                            <h3>No results found. Try again.</h3>
+                        </li>
                     {% endfor %}
-                </div>
+                </ul>
                 {% include "_items/pagination.html" %}
             </div>
         </div>

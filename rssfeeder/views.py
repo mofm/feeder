@@ -12,7 +12,7 @@ from django.urls import reverse_lazy
 from django.db import IntegrityError
 from django.db.models import Q
 from django.views.decorators.http import require_POST
-from .models import Feed, UserFavorites, Category
+from .models import Feed, Category, UserProfile
 from .forms import UserUpdateForm
 import json
 
@@ -23,8 +23,10 @@ def mark_read_ajax(request):
         data = json.loads(request.body)
         feed_id = data.get('feed_id')
         feed = get_object_or_404(Feed, pk=feed_id)
-        feed.read = True
-        feed.save()
+        user_profile, created = UserProfile.objects.get_or_create(user=request.user)
+        # Add the feed to the read list
+        user_profile.read.add(feed)
+
         return JsonResponse({'status': 'success'})
     except json.JSONDecodeError:
         return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
@@ -182,32 +184,30 @@ class UserFavoritesView(PermissionRequiredMixin, ListView):
     login_url = '/login'
     permission_required = 'rssfeeder.view_feed'
     template_name = 'favorites.html'
-    model = UserFavorites
+    model = Feed
 
     def get_queryset(self):
-        user = self.request.user.id
-        object_list = self.model.objects.filter(user=user).order_by("-created_on")
-        return object_list
+        user_profile = UserProfile.objects.prefetch_related('favorites').get(user=self.request.user)
+        return user_profile.favorites.all().order_by('-pub_date')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(paginate(self.get_queryset(), self.request))
         return context
 
-
 class AddFavorite(PermissionRequiredMixin, View):
     login_url = '/login'
     permission_required = 'rssfeeder.view_feed'
 
     def post(self, request, *args, **kwargs):
-        user = User.objects.get(id=self.request.user.id)
+        user_profile = UserProfile.objects.get(user=self.request.user)
         feed = Feed.objects.get(pk=self.request.POST.get('pk'))
 
         if 'addfavorite' in request.POST:
-            UserFavorites.objects.get_or_create(user=user, favorites=feed)
+            user_profile.favorites.add(feed)
             messages.success(request, "Feed added to favorites!")
         elif 'removefavorite' in request.POST:
-            UserFavorites.objects.filter(user=user).get(favorites=feed).delete()
+            user_profile.favorites.remove(feed)
             messages.success(request, "Feed removed from favorites!")
 
         return redirect(request.META.get('HTTP_REFERER'))

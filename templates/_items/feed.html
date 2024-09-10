@@ -30,7 +30,7 @@
                         </div>
                         <div>
                             <button class="btn btn-secondary btn-sm" disabled>
-                                {% if feed.read %}
+                                {% if feed in user.userprofile.read.all %}
                                     <i class="fas fa-check-circle"></i> Read
                                 {% else %}
                                     <i class="far fa-circle"></i> Unread
