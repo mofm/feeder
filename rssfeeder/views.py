@@ -32,6 +32,29 @@ def mark_read_ajax(request):
         return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
 
 
+@require_POST
+def favops(request):
+    try:
+        data = json.loads(request.body)
+        feed_id = data.get('feed_id')
+        action = data.get('action')
+        feed = get_object_or_404(Feed, pk=feed_id)
+        user_profile = UserProfile.objects.get(user=request.user)
+
+        if action == 'add':
+            user_profile.favorites.add(feed)
+            message = "Feed added to favorites!"
+        elif action == 'remove':
+            user_profile.favorites.remove(feed)
+            message = "Feed removed from favorites!"
+        else:
+            return JsonResponse({'status': 'error', 'message': 'Invalid action'}, status=400)
+
+        return JsonResponse({'status': 'success', 'message': message})
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
+
+
 def catdata(request, per_page=10):
     cat_data = {}
     for cat in Category.objects.all():
@@ -194,23 +217,6 @@ class UserFavoritesView(PermissionRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         context.update(paginate(self.get_queryset(), self.request))
         return context
-
-class AddFavorite(PermissionRequiredMixin, View):
-    login_url = '/login'
-    permission_required = 'rssfeeder.view_feed'
-
-    def post(self, request, *args, **kwargs):
-        user_profile = UserProfile.objects.get(user=self.request.user)
-        feed = Feed.objects.get(pk=self.request.POST.get('pk'))
-
-        if 'addfavorite' in request.POST:
-            user_profile.favorites.add(feed)
-            messages.success(request, "Feed added to favorites!")
-        elif 'removefavorite' in request.POST:
-            user_profile.favorites.remove(feed)
-            messages.success(request, "Feed removed from favorites!")
-
-        return redirect(request.META.get('HTTP_REFERER'))
 
 
 class ProfileView(LoginRequiredMixin, TemplateView):

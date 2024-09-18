@@ -1,6 +1,6 @@
 from django.urls import path, re_path
 from .views import IndexView, SearchResults, LoginView, LogoutView, UserFavoritesView, \
-    AddFavorite, ProfileView, ChangePasswordView, ChannelView, ChannelList, mark_read_ajax
+    ProfileView, ChangePasswordView, ChannelView, ChannelList, mark_read_ajax, favops
 
 
 urlpatterns = [
@@ -24,8 +24,8 @@ urlpatterns = [
     path("political", IndexView.as_view(), name="politicalpage"),
     path("search/", SearchResults.as_view(), name="search"),
     path("favorites", UserFavoritesView.as_view(), name="favorites"),
-    path("favops", AddFavorite.as_view(), name="favops"),
     path("profile/<username>", ProfileView.as_view(), name="profile"),
     path('password-change/', ChangePasswordView.as_view(), name='password_change'),
     path('mark_read_ajax/', mark_read_ajax, name='mark_read_ajax'),
+    path('favops/', favops, name='favops')
 ]

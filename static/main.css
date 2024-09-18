@@ -37,3 +37,11 @@ footer {
   padding: 1em;
   background-color: var(--dark-blue);
 }
+
+.btn-favorite.favorited {
+    color: red;
+}
+
+.feed-title {
+    max-width: 70%;
+}

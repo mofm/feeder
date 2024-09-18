@@ -1,3 +1,67 @@
+// Define the getCookie function
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Define the toggleFavorite function
+function toggleFavorite(feedId, action) {
+    fetch('/favops/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({ feed_id: feedId, action: action })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.status === 'success') {
+            const feedElement = document.querySelector(`[data-feed-id="${feedId}"]`);
+            const favoriteButton = feedElement.querySelector('.btn-favorite');
+            if (action === 'add') {
+                favoriteButton.innerHTML = '<i class="fas fa-heart"></i>';
+                favoriteButton.setAttribute('data-action', 'remove');
+                favoriteButton.classList.add('favorited');
+            } else {
+                favoriteButton.innerHTML = '<i class="far fa-heart"></i>';
+                favoriteButton.setAttribute('data-action', 'add');
+                favoriteButton.classList.remove('favorited');
+            }
+        }
+    })
+    .catch(error => {
+        console.error('There was a problem with the fetch operation:', error);
+    });
+}
+
+// Attach event listeners to favorite buttons
+document.addEventListener('DOMContentLoaded', function() {
+    const favoriteButtons = document.querySelectorAll('.btn-favorite');
+    favoriteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const feedId = this.closest('[data-feed-id]').getAttribute('data-feed-id');
+            const action = this.getAttribute('data-action');
+            toggleFavorite(feedId, action);
+        });
+    });
+});
+
 // Define the shareFeed function
 function shareFeed(url) {
     if (navigator.share) {
@@ -86,20 +150,5 @@ document.addEventListener('DOMContentLoaded', function () {
         .catch(error => {
             console.error('There was a problem with the fetch operation:', error);
         });
-    }
-
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
     }
 });

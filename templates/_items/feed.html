@@ -20,13 +20,9 @@
                                     <i class="fas fa-book-open"></i>
                                 </button>
                             </a>
-                            <form method='POST' action="{% url 'favops' %}" class="d-inline">
-                                {% csrf_token %}
-                                <input name="pk" id="pk" type="hidden" value={{ feed.pk }}>
-                                <button type="submit" name="addfavorite" class="btn btn-info btn-sm">
-                                    <i class="fas fa-heart"></i>
-                                </button>
-                            </form>
+                            <button class="btn bg-transparent btn-sm btn-favorite {% if feed in user.userprofile.favorites.all %}favorited{% endif %}" data-action="{% if feed in user.userprofile.favorites.all %}remove{% else %}add{% endif %}">
+                                <i class="{% if feed in user.userprofile.favorites.all %}fas fa-heart{% else %}far fa-heart{% endif %}"></i>
+                            </button>
                         </div>
                         <div>
                             <button class="btn btn-secondary btn-sm" disabled>

@@ -6,20 +6,16 @@
             <div class="col">
                 <ul class="list-group">
                     {% for feed in page_obj %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <div class="text-truncate" style="max-width: 70%;">
+                        <li class="list-group-item d-flex justify-content-between align-items-center" data-feed-id="{{ feed.pk }}">
+                            <div class="text-truncate feed-title">
                                 <a href="{{ feed.link }}" class="text-primary text-truncate" target="_blank">{{ feed.title }}</a>
                                 <small class="text-muted d-block">{{ feed.pub_date | date:"d/m/Y" }}</small>
                                 <span class="badge badge-secondary">{{ feed.category }}</span>
                             </div>
                             <div class="btn-group">
-                                <form method='POST' action="{% url 'favops' %}" class="d-inline">
-                                    {% csrf_token %}
-                                    <input name="pk" id="pk" type="hidden" value="{{ feed.pk }}">
-                                    <button type="submit" name="removefavorite" class="btn btn-danger btn-sm">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
-                                </form>
+                                <button class="btn bg-transparent btn-sm btn-favorite favorited" data-action="remove">
+                                    <i class="fas fa-heart"></i>
+                                </button>
                                 <button class="btn btn-secondary btn-sm share-button" data-url="{{ feed.link }}">
                                     <i class="fas fa-share"></i>
                                 </button>
